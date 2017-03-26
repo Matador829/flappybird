@@ -13,6 +13,7 @@ physics.start()
 -- Initialize variables
 local bird
 local gameLoopTimer
+local score = 0
 local scoreText
 local earth
 local obsWidth = 50
@@ -38,18 +39,19 @@ local function createObstacle()
 
     height = math.random(display.contentCenterY - 200, display.contentCenterY + 200)
 
-    local newObstacleTop = display.newRect( mainGroup, display.contentWidth+obsWidth, height+350, obsWidth, obsHeight)
-    table.insert( obsList, newObstacleTop )
-    newObstacleTop.myName = "obsTop"
-    physics.addBody( newObstacleTop, "static")
+    local obstacleTop = display.newRect( mainGroup, display.contentWidth+obsWidth, height+350, obsWidth, obsHeight)
+    elements:insert(obstacleTop)
+    obstacleTop.myName = "obsTop"
+    obstacleTop.scoreAdded = false
+    physics.addBody( obstacleTop, "static")
 
-    local newObstacleBottom = display.newRect( mainGroup, display.contentWidth+obsWidth, height-350, obsWidth, obsHeight)
-    table.insert( obsList, newObstacleBottom )
-    newObstacleBottom.myName = "obsBot"
-    physics.addBody( newObstacleBottom, "static")
+    local obstacleBottom = display.newRect( mainGroup, display.contentWidth+obsWidth, height-350, obsWidth, obsHeight)
+    elements:insert(obstacleBottom)
+    obstacleBottom.myName = "obsBot"
+    physics.addBody( obstacleBottom, "static")
 
-    left = transition.to( newObstacleTop, {time=4000, x = -newObstacleTop.x })
-    left = transition.to( newObstacleBottom, {time=4000, x = -newObstacleBottom.x })
+    left = transition.to( obstacleTop, {time=4000, x = -obstacleTop.x })
+    left = transition.to( obstacleBottom, {time=4000, x = -obstacleBottom.x })
 
 end
 
@@ -69,6 +71,18 @@ local function flap( event )
     end
 end
 
+local function increaseScore()
+  for i = elements.numChildren, 1, -1 do
+      if ( elements[i].x <= display.contentCenterX-90) and (elements[i].scoreAdded == false)
+      then
+          -- Increase score
+          score = score + 1
+          scoreText.text = "Score: " .. score
+          elements[i].scoreAdded = true
+      end
+  end
+end
+
 Runtime:addEventListener( "touch", flap)
 
 local function gameLoop()
@@ -76,24 +90,29 @@ local function gameLoop()
     -- Create new obstacle
     if (dead ~= true)
     then
-      createObstacle()
+      timer.performWithDelay( 1000, createObstacle(), 0 )
+      increaseScore()
+      --createObstacle()
+      --increaseScore()
     end
     -- Remove obstacles which have drifted off screen
-    for i = #obsList, 1, -1 do
-        local thisObstacle = obsList[i]
-
-        if ( thisObstacle.x < -obsWidth )
+    for i = elements.numChildren, 1, -1 do
+        --local thisObstacle = obsList[i]
+        --print(obsList[i])
+        if ( elements[i].x < -obsWidth )
         then
-            display.remove( thisObstacle )
-            table.remove( obsList, i )
+            --display.remove( thisObstacle )
+            --table.remove( obsList, i )
+            elements:remove(elements[i])
         end
     end
 end
 
 local function endGame()
-  display.remove( loser )
-		composer.removeScene( "menu" )
-		composer.gotoScene( "menu", { time=800, effect="crossFade" } )
+    display.remove( loser )
+    composer.setVariable( "finalScore", score )
+		composer.removeScene( "highscores" )
+		composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
 end
 
 local function onCollision( event )
@@ -138,11 +157,19 @@ function scene:create( event )
 	backGroup = display.newGroup()  -- Display group for the background image
 	sceneGroup:insert( backGroup )  -- Insert into the scene's view group
 
-	mainGroup = display.newGroup()  -- Display group for the ship, asteroids, lasers, etc.
+	mainGroup = display.newGroup()  -- Display group for the bird
 	sceneGroup:insert( mainGroup )  -- Insert into the scene's view group
 
 	uiGroup = display.newGroup()    -- Display group for UI objects like the score
 	sceneGroup:insert( uiGroup )    -- Insert into the scene's view group
+
+  elements = display.newGroup()
+  elements.anchorChildren = true
+  elements.anchorX = 0
+  elements.anchorY = 1
+  elements.x = 0
+  elements.y = 0
+  sceneGroup:insert(elements)
 
   -- Load content
   vertices = {-22/2,-15/2,20/2,-20/2,23/2,13/2,-27/2,26/2,-18/2,14/2}
@@ -156,6 +183,8 @@ function scene:create( event )
   earth = display.newRect( mainGroup, display.contentCenterX, display.contentHeight+30, 320, 30)
   physics.addBody( earth, "static")
   earth.myName = "earth"
+
+  scoreText = display.newText(uiGroup, "Score: " .. score, display.contentCenterX, 10, native.systemFont, 15)
 
 end
 

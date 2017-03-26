@@ -12,6 +12,11 @@ local function gotoGame()
     composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
 
+local function gotoHighScores()
+    composer.removeScene( "highscores" )
+    composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
+end
+
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -22,10 +27,14 @@ function scene:create( event )
 	local sceneGroup = self.view
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 
-	local playButton = display.newText( sceneGroup, "Play", display.contentCenterX, display.contentCenterY, native.systemFont, 44 )
+	local playButton = display.newText( sceneGroup, "Play", display.contentCenterX, display.contentCenterY, native.systemFont, 30)
 	playButton:setFillColor( 1, 1, 1 )
 
+  local highScoresButton = display.newText( sceneGroup, "High Scores", display.contentCenterX, display.contentCenterY+100, native.systemFont, 30)
+	highScoresButton:setFillColor( 1, 1, 1 )
+
 	playButton:addEventListener( "tap", gotoGame )
+  highScoresButton:addEventListener( "tap", gotoHighScores )
 end
 
 
@@ -68,7 +77,6 @@ function scene:destroy( event )
 
 	local sceneGroup = self.view
 	-- Code here runs prior to the removal of scene's view
-  -- Dispose audio!
 
 end
 
